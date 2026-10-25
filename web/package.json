@@ -1,0 +1,35 @@
+{
+  "name": "ro3-db",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "node scripts/build-db.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5",
+    "@tanstack/react-table": "^8",
+    "cmdk": "^1",
+    "drizzle-orm": "^0.36",
+    "framer-motion": "^11",
+    "lucide-react": "^0.460",
+    "next": "^15",
+    "react": "^19",
+    "react-dom": "^19",
+    "tailwindcss": "^4"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "drizzle-kit": "^0.28",
+    "typescript": "^5"
+  },
+  "allowScripts": {
+    "better-sqlite3@11.10.0": true,
+    "esbuild@0.18.20": true,
+    "esbuild@0.19.12": true
+  }
+}

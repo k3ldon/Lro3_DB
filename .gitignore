@@ -1,0 +1,12 @@
+node_modules/
+.next/
+web/node_modules/
+web/.next/
+web/data/
+*.db
+*.db-wal
+*.db-shm
+_legacy_php/
+__pycache__/
+*.pyc
+.playwright-mcp/
