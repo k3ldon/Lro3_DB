@@ -12,19 +12,26 @@ export default async function MvpsPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">MVPs <span className="text-sm font-normal text-zinc-500">({rows.length})</span></h1>
+      <h1 className="mb-2 text-2xl font-bold text-[#080706]">MVPs <span className="text-sm font-normal text-[#aaaaaa]">({rows.length})</span></h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((m) => (
           <a key={String(m.id)} href={`/monsters/${m.npcId}`}
-            className="panel p-4 transition hover:border-red-500/40 hover:shadow-[0_0_20px_rgba(239,68,68,0.15)]">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">{String(m.name)}</h2>
-              <span className="rounded bg-red-500/20 px-2 py-0.5 text-[10px] font-bold text-red-400">MVP</span>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-400">
-              <span className="stat-chip">Nv. {String(m.level)}</span>
-              {m.hp ? <span className="stat-chip">HP {Number(m.hp).toLocaleString("es")}</span> : null}
-              <span className="stat-chip text-amber-300">Respawn {Number(m.refreshTime) / 60} min</span>
+            className="panel p-4 transition hover:shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="icon-frame h-14 w-14 shrink-0">
+                {m.headIcon ? <img src={String(m.headIcon)} alt="" width={48} height={48} loading="lazy" /> : null}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="truncate font-bold text-[#080706]">{String(m.name)}</h2>
+                  <span className="shrink-0 rounded-full bg-[#b8292f]/10 px-2 py-0.5 text-[10px] font-bold text-[#b8292f]">MVP</span>
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
+                  <span className="stat-chip text-[#4e4b4d]">Nv. {String(m.level)}</span>
+                  {m.hp ? <span className="stat-chip text-[#4e4b4d]">HP {Number(m.hp).toLocaleString("es")}</span> : null}
+                  <span className="stat-chip text-[#c87d28]">Respawn {Number(m.refreshTime) / 60} min</span>
+                </div>
+              </div>
             </div>
           </a>
         ))}

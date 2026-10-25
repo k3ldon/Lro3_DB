@@ -19,7 +19,7 @@ export default async function MonsterDetail({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const db = getDb();
   const mon = db.prepare(
-    `SELECT id, name, level, is_mvp AS isMvp, hp, stats, element, drop_table AS dropTable, normal_drops AS normalDrops
+    `SELECT id, name, level, is_mvp AS isMvp, hp, stats, element, icon, drop_table AS dropTable, normal_drops AS normalDrops
      FROM monsters WHERE id = ?`
   ).get(Number(id)) as undefined | Record<string, unknown>;
   if (!mon) notFound();
@@ -101,24 +101,27 @@ export default async function MonsterDetail({ params }: { params: Promise<{ id: 
   return (
     <div>
       <div className="panel p-6">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-5">
+          <div className="icon-frame h-20 w-20 shrink-0">
+            {mon.icon ? <img src={String(mon.icon)} alt="" width={72} height={72} /> : null}
+          </div>
           <div>
-            <h1 className="flex items-center gap-3 text-2xl font-bold">
-              {mvp ? <span className="rounded bg-red-500/20 px-2 py-0.5 text-xs font-bold text-red-400">MVP</span> : null}
+            <h1 className="flex items-center gap-3 text-2xl font-bold text-[#080706]">
+              {mvp ? <span className="rounded-full bg-[#b8292f]/10 px-2 py-0.5 text-xs font-bold text-[#b8292f]">MVP</span> : null}
               {String(mon.name)}
             </h1>
-            <div className="mt-2 flex flex-wrap gap-2 text-zinc-400">
-              <span className="stat-chip">Nivel {String(mon.level)}</span>
-              <span className="stat-chip">HP {Number(mon.hp).toLocaleString("es")}</span>
-              <span className="stat-chip">Elemento {String(mon.element)}</span>
-              {mvp ? <span className="stat-chip text-amber-300">Respawn {Number(mvp.refresh_time) / 60} min</span> : null}
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="stat-chip text-[#4e4b4d]">Nivel {String(mon.level)}</span>
+              <span className="stat-chip text-[#4e4b4d]">HP {Number(mon.hp).toLocaleString("es")}</span>
+              <span className="stat-chip text-[#4e4b4d]">Elemento {String(mon.element)}</span>
+              {mvp ? <span className="stat-chip text-[#c87d28]">Respawn {Number(mvp.refresh_time) / 60} min</span> : null}
             </div>
           </div>
         </div>
         {Object.keys(stats).length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
             {Object.entries(stats).map(([a, v]) => (
-              <span key={a} className="stat-chip text-sky-300">{a}: {v.toLocaleString("es")}</span>
+              <span key={a} className="stat-chip text-[#2d56a6]">{a}: {v.toLocaleString("es")}</span>
             ))}
           </div>
         )}
@@ -126,19 +129,19 @@ export default async function MonsterDetail({ params }: { params: Promise<{ id: 
 
       {dropSections.length > 0 && (
         <div className="mt-4 space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Tabla de drops</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[#aaaaaa]">Tabla de drops</h2>
           {dropSections.map((s, si) => (
             <div key={si} className="panel p-4">
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-amber-400">{s.title}</h3>
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-[#927e72]">{s.title}</h3>
               {s.pools.map((p) => (
                 <div key={p.poolId} className="mb-3 last:mb-0">
                   {p.slots.map((slot) => {
                     const rows = (groupCache.get(slot.group) ?? []).filter((r) => r.weight > 0);
                     const totalW = rows.reduce((a, r) => a + r.weight, 0);
                     return (
-                      <div key={`${slot.slot}-${slot.group}`} className="mb-2 rounded-lg border border-zinc-800 p-2">
-                        <div className="mb-1 flex gap-3 text-[11px] text-zinc-500">
-                          <span>Prob. slot: <b className="text-zinc-300">{pct(slot.chance)}</b></span>
+                      <div key={`${slot.slot}-${slot.group}`} className="mb-2 rounded-xl border border-[rgba(78,75,77,0.12)] p-3">
+                        <div className="mb-1 flex gap-3 text-[11px] text-[#aaaaaa]">
+                          <span>Prob. slot: <b className="text-[#4e4b4d]">{pct(slot.chance)}</b></span>
                           {slot.rolls > 1 && <span>Rolls: {slot.rolls}</span>}
                           {slot.picks > 1 && <span>Picks: {slot.picks}</span>}
                         </div>
@@ -148,19 +151,20 @@ export default async function MonsterDetail({ params }: { params: Promise<{ id: 
                             const isExp = r.item === 100;
                             return (
                               <li key={r.rowId} className="flex items-center gap-2 text-sm">
-                                <span className="w-14 text-right text-xs text-zinc-500">
+                                <span className="w-14 text-right text-xs text-[#aaaaaa]">
                                   {totalW > 0 ? `${((r.weight / totalW) * 100).toFixed(1)}%` : ""}
                                 </span>
                                 {isExp ? (
-                                  <span className="text-amber-300">Base EXP</span>
+                                  <span className="text-[#c87d28]">Base EXP</span>
                                 ) : item ? (
-                                  <a href={`/items/${r.item}`}
-                                    className={`quality-${item.quality} q-text hover:underline`}>{item.name}</a>
+                                  <span className={`quality-${item.quality}`}>
+                                    <a href={`/items/${r.item}`} className="q-text hover:underline">{item.name}</a>
+                                  </span>
                                 ) : (
-                                  <span className="text-zinc-500">Item {r.item}</span>
+                                  <span className="text-[#aaaaaa]">Item {r.item}</span>
                                 )}
-                                <span className="text-xs text-zinc-500">x{r.min === r.max ? r.min : `${r.min}–${r.max}`}</span>
-                                {r.bind ? <span className="text-[10px] text-zinc-600">(ligado)</span> : null}
+                                <span className="text-xs text-[#aaaaaa]">x{r.min === r.max ? r.min : `${r.min}–${r.max}`}</span>
+                                {r.bind ? <span className="text-[10px] text-[#aaaaaa]">(ligado)</span> : null}
                               </li>
                             );
                           })}

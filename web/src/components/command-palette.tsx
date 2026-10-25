@@ -44,92 +44,99 @@ export function CommandPalette() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-400 hover:border-amber-500/50 hover:text-zinc-200"
+        className="flex items-center gap-2 rounded-full border border-[rgba(78,75,77,0.15)] bg-white/70 px-3 py-1.5 text-sm text-[#4e4b4d] transition hover:border-[#927e72]"
       >
         <Search size={14} />
         <span className="hidden sm:inline">Buscar…</span>
-        <kbd className="ml-2 rounded border border-zinc-700 bg-zinc-800 px-1.5 text-[10px]">Ctrl K</kbd>
+        <kbd className="ml-1 hidden rounded border border-[rgba(78,75,77,0.2)] bg-white px-1.5 text-[10px] sm:inline">Ctrl K</kbd>
       </button>
       <Command.Dialog
         open={open}
         onOpenChange={setOpen}
         label="Omnisearch"
         className="fixed inset-0 z-50"
-        overlayClassName="fixed inset-0 bg-black/60 backdrop-blur-sm"
-        contentClassName="mx-auto mt-[12vh] w-full max-w-xl rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl overflow-hidden"
+        overlayClassName="fixed inset-0 bg-[#080706]/40 backdrop-blur-sm"
+        contentClassName="mx-auto mt-[12vh] w-full max-w-xl rounded-2xl border border-[rgba(78,75,77,0.15)] bg-[#faf9f5] shadow-2xl overflow-hidden"
       >
         <Command.Input
           value={q}
           onValueChange={setQ}
           placeholder="Buscar ítems, monstruos, MVPs, cartas…"
-          className="w-full border-b border-zinc-800 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-zinc-500"
+          className="w-full border-b border-[rgba(78,75,77,0.12)] bg-transparent px-4 py-3 text-sm outline-none placeholder:text-[#aaaaaa]"
         />
         <Command.List className="max-h-[50vh] overflow-y-auto p-2">
-          <Command.Empty className="px-3 py-6 text-center text-sm text-zinc-500">Sin resultados.</Command.Empty>
+          <Command.Empty className="px-3 py-6 text-center text-sm text-[#aaaaaa]">Sin resultados.</Command.Empty>
 
           {res.items.length > 0 && (
-            <Command.Group heading="Ítems" className="text-amber-500/80 text-xs uppercase tracking-wider">
+            <Command.Group heading="Ítems" className="text-[#927e72] text-xs uppercase tracking-wider">
               {res.items.map((i) => (
                 <Command.Item
                   key={`i${i.id}`}
                   value={`item ${i.name}`}
                   onSelect={() => go(`/items/${i.id}`)}
-                  className={`quality-${i.quality} flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-zinc-200 data-[selected=true]:bg-zinc-800`}
+                  className={`quality-${i.quality} flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm data-[selected=true]:bg-[rgba(78,75,77,0.08)]`}
                 >
-                  <span className="q-text h-2 w-2 rounded-full bg-[var(--q)]" />
+                  <span className="icon-frame h-7 w-7 shrink-0">
+                    {i.icon ? <img src={i.icon} alt="" width={24} height={24} /> : null}
+                  </span>
                   <span className="q-text">{i.name}</span>
-                  <span className="ml-auto text-xs text-zinc-500">Nv. {i.levelNeed}</span>
+                  <span className="ml-auto text-xs text-[#aaaaaa]">Nv. {i.levelNeed}</span>
                 </Command.Item>
               ))}
             </Command.Group>
           )}
 
           {res.monsters.length > 0 && (
-            <Command.Group heading="Monstruos" className="text-amber-500/80 text-xs uppercase tracking-wider">
+            <Command.Group heading="Monstruos" className="text-[#927e72] text-xs uppercase tracking-wider">
               {res.monsters.map((m) => (
                 <Command.Item
                   key={`m${m.id}`}
                   value={`monster ${m.name}`}
                   onSelect={() => go(`/monsters/${m.id}`)}
-                  className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-zinc-200 data-[selected=true]:bg-zinc-800"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm data-[selected=true]:bg-[rgba(78,75,77,0.08)]"
                 >
-                  {m.isMvp && <span className="rounded bg-red-500/20 px-1 text-[10px] font-bold text-red-400">MVP</span>}
+                  <span className="icon-frame h-7 w-7 shrink-0">
+                    {m.icon ? <img src={m.icon} alt="" width={24} height={24} /> : null}
+                  </span>
+                  {m.isMvp && <span className="rounded-full bg-[#b8292f]/10 px-1.5 text-[10px] font-bold text-[#b8292f]">MVP</span>}
                   <span>{m.name}</span>
-                  <span className="ml-auto text-xs text-zinc-500">Nv. {m.level}</span>
+                  <span className="ml-auto text-xs text-[#aaaaaa]">Nv. {m.level}</span>
                 </Command.Item>
               ))}
             </Command.Group>
           )}
 
           {res.mvps.length > 0 && (
-            <Command.Group heading="MVPs" className="text-amber-500/80 text-xs uppercase tracking-wider">
+            <Command.Group heading="MVPs" className="text-[#927e72] text-xs uppercase tracking-wider">
               {res.mvps.map((m) => (
                 <Command.Item
                   key={`v${m.id}`}
                   value={`mvp ${m.name}`}
                   onSelect={() => go(`/monsters/${m.npcId}`)}
-                  className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-zinc-200 data-[selected=true]:bg-zinc-800"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm data-[selected=true]:bg-[rgba(78,75,77,0.08)]"
                 >
-                  <span className="rounded bg-red-500/20 px-1 text-[10px] font-bold text-red-400">MVP</span>
+                  <span className="rounded-full bg-[#b8292f]/10 px-1.5 text-[10px] font-bold text-[#b8292f]">MVP</span>
                   <span>{m.name}</span>
-                  <span className="ml-auto text-xs text-zinc-500">Nv. {m.level}</span>
+                  <span className="ml-auto text-xs text-[#aaaaaa]">Nv. {m.level}</span>
                 </Command.Item>
               ))}
             </Command.Group>
           )}
 
           {res.cards.length > 0 && (
-            <Command.Group heading="Cartas" className="text-amber-500/80 text-xs uppercase tracking-wider">
+            <Command.Group heading="Cartas" className="text-[#927e72] text-xs uppercase tracking-wider">
               {res.cards.map((c) => (
                 <Command.Item
                   key={`c${c.cardId}`}
                   value={`card ${c.name}`}
                   onSelect={() => go(`/cards/${c.cardId}`)}
-                  className={`quality-${c.quality} flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-zinc-200 data-[selected=true]:bg-zinc-800`}
+                  className={`quality-${c.quality} flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm data-[selected=true]:bg-[rgba(78,75,77,0.08)]`}
                 >
-                  <span className="q-text h-2 w-2 rounded-full bg-[var(--q)]" />
+                  <span className={`quality-${c.quality} icon-frame q-border h-7 w-7 shrink-0`}>
+                    {c.icon ? <img src={c.icon} alt="" width={24} height={24} /> : null}
+                  </span>
                   <span className="q-text">{c.name}</span>
-                  <span className="ml-auto text-xs text-zinc-500">{c.power} power</span>
+                  <span className="ml-auto text-xs text-[#aaaaaa]">{c.power} power</span>
                 </Command.Item>
               ))}
             </Command.Group>

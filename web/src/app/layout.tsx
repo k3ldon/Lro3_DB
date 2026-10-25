@@ -9,26 +9,24 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className="dark">
-      <body className="min-h-screen bg-zinc-950 text-zinc-200 antialiased">
-        <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
-          <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4">
-            <a href="/" className="flex items-center gap-2 font-bold tracking-wide">
-              <span className="text-amber-400">RO3</span>
-              <span className="text-zinc-400 font-normal text-sm">Database</span>
-            </a>
-            <nav className="flex items-center gap-4 text-sm text-zinc-400">
-              <a href="/items" className="hover:text-amber-300">Ítems</a>
-              <a href="/monsters" className="hover:text-amber-300">Monstruos</a>
-              <a href="/mvps" className="hover:text-amber-300">MVPs</a>
-              <a href="/cards" className="hover:text-amber-300">Cartas</a>
-            </nav>
-            <div className="ml-auto">
-              <CommandPalette />
-            </div>
-          </div>
-        </header>
+    <html lang="es">
+      <body className="min-h-screen antialiased">
+        <nav className="pill-nav">
+          <a href="/" className="flex items-center gap-1.5 px-3 font-bold tracking-wide text-[#080706]">
+            RO<span className="text-[#927e72]">3</span>
+          </a>
+          <span className="mx-1 h-4 w-px bg-[rgba(78,75,77,0.15)]" />
+          <a href="/items" className="pill-link">Ítems</a>
+          <a href="/monsters" className="pill-link">Monstruos</a>
+          <a href="/mvps" className="pill-link">MVPs</a>
+          <a href="/cards" className="pill-link">Cartas</a>
+          <span className="mx-1 h-4 w-px bg-[rgba(78,75,77,0.15)]" />
+          <CommandPalette />
+        </nav>
         <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+        <footer className="pb-8 text-center text-xs text-[#aaaaaa]">
+          Datos extraídos del cliente RO3 · db.lagnarok.online
+        </footer>
       </body>
     </html>
   );

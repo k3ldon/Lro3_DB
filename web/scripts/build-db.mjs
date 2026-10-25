@@ -1,11 +1,28 @@
 import { DatabaseSync } from "node:sqlite";
-import { readFileSync, mkdirSync, rmSync } from "node:fs";
+import { readFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const dataDir = join(root, "data", "ro3");
 const dbPath = join(root, "ro3.db");
+const assetsDir = join(root, "public", "assets", "ro3");
+
+// Resolve an icon filename to a verified /assets/ro3/{category}/{stem}.webp path.
+const stemExists = (category, filename) => {
+  if (!filename) return "";
+  const stem = filename.replace(/\.png$/i, "");
+  const p = join(assetsDir, category, `${stem}.webp`);
+  if (existsSync(p)) return `/assets/ro3/${category}/${stem}.webp`;
+  // MVP head icons carry a "_1" suffix variant; fall back to the base icon.
+  if (stem.endsWith("_1")) {
+    const base = stem.slice(0, -2);
+    if (existsSync(join(assetsDir, category, `${base}.webp`))) {
+      return `/assets/ro3/${category}/${base}.webp`;
+    }
+  }
+  return "";
+};
 
 mkdirSync(dirname(dbPath), { recursive: true });
 rmSync(dbPath, { force: true });
@@ -63,26 +80,26 @@ const read = (n) => JSON.parse(readFileSync(join(dataDir, `${n}.json`), "utf-8")
 const insItem = db.prepare(`INSERT INTO items VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 for (const it of read("items")) {
   insItem.run(it.id, it.name, it.name.toLowerCase(), it.desc, it.type, it.subType, it.quality,
-    it.levelNeed, it.stackLimit, it.tradeable ? 1 : 0, it.bagTab, it.icon, it.cardPart,
+    it.levelNeed, it.stackLimit, it.tradeable ? 1 : 0, it.bagTab, stemExists("item", it.icon), it.cardPart,
     it.equip ? JSON.stringify(it.equip) : null);
 }
 
 const insMon = db.prepare(`INSERT INTO monsters VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`);
 for (const m of read("monsters")) {
   insMon.run(m.id, m.name, m.name.toLowerCase(), m.level, m.npcType, m.element, m.isMvp ? 1 : 0,
-    m.icon, m.hp || 0, m.stats ? JSON.stringify(m.stats) : null, m.drops?.drop || 0,
+    stemExists("monster", m.icon), m.hp || 0, m.stats ? JSON.stringify(m.stats) : null, m.drops?.drop || 0,
     JSON.stringify(m.drops?.normalDrop || []));
 }
 
 const insMvp = db.prepare(`INSERT INTO mvps VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
 for (const m of read("mvps")) {
   insMvp.run(m.id, m.npcId, m.name, m.name.toLowerCase(), m.level, m.mapId, m.refreshTime,
-    m.headIcon, JSON.stringify(m.awards), JSON.stringify(m.preview), JSON.stringify(m.pools || {}));
+    stemExists("monster", m.headIcon), JSON.stringify(m.awards), JSON.stringify(m.preview), JSON.stringify(m.pools || {}));
 }
 
 const insCard = db.prepare(`INSERT INTO cards VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 for (const c of read("cards")) {
-  insCard.run(c.id, c.cardId, c.name, c.name.toLowerCase(), c.quality, c.cardPart, c.icon,
+  insCard.run(c.id, c.cardId, c.name, c.name.toLowerCase(), c.quality, c.cardPart, stemExists("card", c.icon),
     c.tier, c.level, c.power, c.isOpen ? 1 : 0,
     JSON.stringify(c.basicAttributes), JSON.stringify(c.cost));
 }
@@ -100,4 +117,11 @@ const counts = db.prepare(`SELECT 'items' t, COUNT(*) c FROM items UNION ALL SEL
   UNION ALL SELECT 'mvps', COUNT(*) FROM mvps UNION ALL SELECT 'cards', COUNT(*) FROM cards
   UNION ALL SELECT 'drop_pools', COUNT(*) FROM drop_pools UNION ALL SELECT 'drop_groups', COUNT(*) FROM drop_groups`).all();
 console.log("DB built:", counts.map((r) => `${r.t}=${r.c}`).join(" "));
+
+for (const t of ["items", "monsters", "mvps", "cards"]) {
+  const col = t === "mvps" ? "head_icon" : "icon";
+  const { total, with_icon } = db.prepare(
+    `SELECT COUNT(*) total, SUM(CASE WHEN ${col} != '' THEN 1 ELSE 0 END) with_icon FROM ${t}`).get();
+  console.log(`  ${t}.${col}: ${with_icon}/${total}`);
+}
 db.close();

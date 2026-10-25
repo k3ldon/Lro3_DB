@@ -1,9 +1,12 @@
-"""Extract icon assets from the RO3 client VFS into web/public/icons.
+"""Extract icon assets from the RO3 client VFS into per-category webp files.
 
 Icons live in Unity SpriteAtlas bundles (e.g. Item_Card, Common_Icon,
 HeadIconAtlas): each atlas bundle packs one Texture2D plus a
 name->spriteRect map. This finds the atlas containing each requested icon
 name and crops it out of the atlas image.
+
+Output layout: web/public/assets/ro3/{category}/{stem}.webp, driven by
+needed_icons() which merges DB data with emulator config sources.
 """
 import json
 import os
@@ -15,6 +18,8 @@ import UnityPy
 CLIENT = r"C:\Users\Carlos\Downloads\RO3Emu-win-x64"
 VFS_DIR = os.path.join(CLIENT, "ro3_Data", "StreamingAssets", "VFS")
 DATA_DIR = r"C:\Users\Carlos\Downloads\erods\Lro3_DB\web\data\ro3"
+CFG_DIR = r"C:\Users\Carlos\Downloads\RO3Emu-win-x64\RO3Emu\data\config"
+ASSETS_DIR = r"C:\Users\Carlos\Downloads\erods\Lro3_DB\web\public\assets\ro3"
 OUT_DIR = r"C:\Users\Carlos\Downloads\erods\Lro3_DB\web\public\icons"
 META = os.path.join(VFS_DIR, "assetmeta.data")
 
@@ -32,6 +37,12 @@ ATLAS_BUNDLES = {
     "3e2da8948df5f6c9.bundle": "CommonHeadBoss_Icon",
     "fabbb33eb51c68f5.bundle": "CommonHeadNpc_Icon",
     "ebda4b47a834ddb3.bundle": "CommonHeadExplicit_Icon",
+    "Skill_Icon.spriteatlasv2": "Skill_Icon",
+    "Buff_Icon2.spriteatlasv2": "Buff_Icon2",
+    "Job.spriteatlasv2": "Job",
+    "Skill_Pet_Icon.spriteatlasv2": "Skill_Pet_Icon",
+    "Skill_Totem_Icon.spriteatlasv2": "Skill_Totem_Icon",
+    "Map_UI.spriteatlasv2": "Map_UI",
 }
 
 M64 = (1 << 64) - 1
@@ -162,21 +173,47 @@ class Vfs:
         return index
 
 
+def _load_list(fn):
+    with open(fn, encoding="utf-8") as f:
+        data = json.load(f)
+    return data if isinstance(data, list) else list(data.values())
+
+
 def needed_icons():
-    names = set()
+    """Return {category: [icon filenames]} merging DB data with emulator configs."""
+    cats = {}
 
-    def add(obj):
-        icon = obj.get("icon")
-        if icon:
-            names.add(icon)
+    def add(cat, icon):
+        if icon and icon.endswith(".png"):
+            cats.setdefault(cat, set()).add(icon)
 
-    for fn in ("items.json", "monsters.json", "mvps.json", "cards.json"):
-        with open(os.path.join(DATA_DIR, fn), encoding="utf-8") as f:
-            data = json.load(f)
-        if isinstance(data, list):
-            for x in data:
-                add(x)
-    return sorted(names)
+    # DB-driven categories
+    for fn, cat in (("items.json", "item"), ("monsters.json", "monster"),
+                    ("mvps.json", "monster"), ("cards.json", "card")):
+        for x in _load_list(os.path.join(DATA_DIR, fn)):
+            icon = x.get("icon") or x.get("head_icon")
+            if icon:
+                add(cat, icon)
+
+    # Emulator config sources
+    def cfg(fn):
+        return _load_list(os.path.join(CFG_DIR, fn))
+
+    for r in cfg("SkillConfig.json"):
+        add("skill", r.get("_kIcon"))
+    for r in cfg("JobConfig.json"):
+        add("job", r.get("_kIcon"))
+        add("job", r.get("_kBigIcon"))
+    for r in cfg("PetBaseConfig.json"):
+        add("pet", r.get("_kHeadPic"))
+    for r in cfg("MountsConfig.json"):
+        add("mount", r.get("_kIconRes"))
+    for r in cfg("MapConfig.json"):
+        add("map", r.get("_kWorldMapIcon"))
+    for r in cfg("NPCConfig.json"):
+        add("monster", r.get("_kHeadIcon"))
+
+    return {c: sorted(v) for c, v in sorted(cats.items())}
 
 
 class AtlasStore:
@@ -230,13 +267,23 @@ class AtlasStore:
 
     def load(self, bundle):
         path = self._bundle_path(bundle)
-        if not path:
-            return
-        try:
-            env = UnityPy.load(path)
-        except Exception as e:
-            print(f"  warn: cannot load {bundle}: {e}")
-            return
+        data = None
+        if path:
+            try:
+                env = UnityPy.load(path)
+            except Exception as e:
+                print(f"  warn: cannot load {bundle}: {e}")
+                return
+        else:
+            # atlas stored as a VFS resource (e.g. Skill_Icon.spriteatlasv2)
+            data = self.vfs.raw(bundle)
+            if data is None:
+                return
+            try:
+                env = UnityPy.load(data)
+            except Exception as e:
+                print(f"  warn: cannot load {bundle}: {e}")
+                return
         objs = self._all_objects(env)
         atlas = next((o for o in objs.values() if o.type.name == "SpriteAtlas"), None)
         tex = next((o for o in objs.values() if o.type.name == "Texture2D"), None)
@@ -250,6 +297,20 @@ class AtlasStore:
             return
         self.images[bundle] = tex_img
         self.names[bundle] = set(atlas_data.m_PackedSpriteNamesToIndex)
+        # index rects straight from m_RenderDataMap when present
+        rdm = getattr(atlas_data, "m_RenderDataMap", None)
+        if rdm:
+            entries = rdm if isinstance(rdm, list) else list(rdm.items())
+            by_name = {n: i for i, n in enumerate(atlas_data.m_PackedSpriteNamesToIndex)}
+            for key, rd in entries:
+                if rd.texture.m_FileID == 0 and rd.texture.m_PathID in objs:
+                    name = getattr(key, "name", None)
+                    if name is None and isinstance(key, tuple) and len(key) == 2:
+                        # GUID key: match by index in m_PackedSpriteNamesToIndex
+                        continue
+                    if name:
+                        self.index[name] = (bundle, (rd.textureRect.x, rd.textureRect.y,
+                                                     rd.textureRect.width, rd.textureRect.height))
 
     def load_sprite_bundle(self, stem):
         """Load an icon's own .png bundle: either its Sprite points into a
@@ -287,7 +348,7 @@ class AtlasStore:
                 self.index[stem] = (bundle, (r.x, r.y, r.width, r.height))
                 return
 
-    def extract(self, name, out_png):
+    def extract(self, name, out_path):
         hit = self.index.get(name)
         if not hit:
             return False
@@ -300,52 +361,57 @@ class AtlasStore:
             img = tex.read().image
         else:
             img = self.images[bundle]
-        img.crop((int(x), int(y), int(x + w), int(y + h))).save(out_png)
+        crop = img.crop((int(x), int(y), int(x + w), int(y + h)))
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        if out_path.lower().endswith(".webp"):
+            crop.save(out_path, "WEBP", quality=90)
+        else:
+            crop.save(out_path)
         return True
 
 
 def main():
     only_stems = set(sys.argv[1:]) or None
-    os.makedirs(OUT_DIR, exist_ok=True)
-    names = needed_icons()
-    icons = {}
-    for icon in names:
-        stem = os.path.splitext(icon)[0]
-        if only_stems and stem not in only_stems:
-            continue
-        icons[stem] = icon
-    print(f"{len(names)} icon names, extracting {len(icons)}")
-
+    categories = needed_icons()
     vfs = Vfs()
     store = AtlasStore(vfs)
 
-    # Load every atlas bundle, pulling in sibling sprite bundles as needed.
+    total = sum(len(v) for v in categories.values())
+    print(f"{sum(len(v) for v in categories.values())} icons across {len(categories)} categories")
+
+    # Load atlas bundles first (they cover most icons).
     for bundle in ATLAS_BUNDLES:
         store.load(bundle)
-        # Retry icons not yet indexed after each atlas loads.
-        found = sum(1 for s in icons if s in store.index)
-        print(f"  {bundle}: indexed so far {len(store.index)}, covers {found}/{len(icons)}")
 
+    jobs = []
+    for cat, icons in categories.items():
+        for icon in icons:
+            stem = os.path.splitext(icon)[0]
+            if only_stems and stem not in only_stems:
+                continue
+            out = os.path.join(ASSETS_DIR, cat, f"{stem}.webp")
+            if os.path.exists(out):
+                continue
+            jobs.append((stem, out))
+
+    print(f"extracting {len(jobs)} new webp files")
     ok = miss = 0
-    for i, (stem, icon) in enumerate(sorted(icons.items())):
-        out = os.path.join(OUT_DIR, icon)
+    missing = []
+    for i, (stem, out) in enumerate(jobs):
         if stem not in store.index:
             store.load_sprite_bundle(stem)
         if stem in store.index and store.extract(stem, out):
             ok += 1
         else:
             miss += 1
-            if os.path.exists(out):
-                os.remove(out)
+            missing.append(stem)
         if (i + 1) % 200 == 0:
-            print(f"  {i + 1}/{len(icons)} ok={ok} miss={miss}")
-    print(f"done: ok={ok} miss={miss} -> {OUT_DIR}")
-    if miss:
-        stems_missing = sorted(os.path.splitext(i)[0] for i in icons.values()
-                               if os.path.splitext(i)[0] not in store.index)
-        with open(os.path.join(OUT_DIR, "_missing.txt"), "w", encoding="utf-8") as f:
-            f.write("\n".join(stems_missing))
-        print(f"missing stems written to _missing.txt ({len(stems_missing)})")
+            print(f"  {i + 1}/{len(jobs)} ok={ok} miss={miss}")
+    print(f"done: ok={ok} miss={miss} -> {ASSETS_DIR}")
+    if missing:
+        with open(os.path.join(ASSETS_DIR, "_missing.txt"), "w", encoding="utf-8") as f:
+            f.write("\n".join(sorted(missing)))
+        print(f"missing stems written to _missing.txt ({len(missing)})")
 
 
 if __name__ == "__main__":

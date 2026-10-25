@@ -27,30 +27,37 @@ export default async function CardsPage({
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Cartas <span className="text-sm font-normal text-zinc-500">({total})</span></h1>
-      <form className="mb-4 flex gap-2" action="/cards">
+      <h1 className="mb-2 text-2xl font-bold text-[#080706]">Cartas <span className="text-sm font-normal text-[#aaaaaa]">({total.toLocaleString("es")})</span></h1>
+      <form className="mb-4 flex flex-wrap gap-2" action="/cards">
         <input name="q" defaultValue={sp.q} placeholder="Filtrar por nombre…"
-          className="w-64 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-amber-500/50" />
-        <button className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-300 hover:bg-amber-500/20">Filtrar</button>
+          className="w-64 rounded-full border border-[rgba(78,75,77,0.15)] bg-white px-4 py-2 text-sm" />
+        <button className="rounded-full bg-[#080706] px-4 py-2 text-sm text-[#f5f4f0] transition hover:bg-[#2a2826]">Filtrar</button>
       </form>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {rows.map((c) => (
           <a key={String(c.cardId)} href={`/cards/${c.cardId}`}
-            className={`quality-${c.quality} panel p-4 transition hover:border-[var(--q)]/50`}>
-            <h2 className="q-text font-semibold">{String(c.name)}</h2>
-            <div className="mt-2 flex gap-2 text-xs text-zinc-400">
-              <span className="stat-chip">{Number(c.power)} power</span>
-              {Number(c.maxTier) > 0 && <span className="stat-chip">Tier {String(c.maxTier)}</span>}
+            className={`quality-${c.quality} panel p-4 transition hover:shadow-md`}>
+            <div className="flex items-center gap-3">
+              <span className={`quality-${c.quality} icon-frame q-border h-14 w-14 border-2`}>
+                {c.icon ? <img src={String(c.icon)} alt="" width={48} height={48} loading="lazy" /> : null}
+              </span>
+              <div className="min-w-0">
+                <h2 className="q-text truncate font-semibold">{String(c.name)}</h2>
+                <div className="mt-1 flex gap-1.5 text-xs text-[#aaaaaa]">
+                  <span className="stat-chip">{Number(c.power)} power</span>
+                  {Number(c.maxTier) > 0 && <span className="stat-chip">T{String(c.maxTier)}</span>}
+                </div>
+              </div>
             </div>
           </a>
         ))}
       </div>
 
-      <div className="mt-4 flex gap-2 text-sm">
-        {page > 1 && <a href={`/cards?q=${encodeURIComponent(sp.q || "")}&page=${page - 1}`} className="rounded-lg border border-zinc-800 px-3 py-1.5 hover:border-amber-500/50">← Anterior</a>}
-        <span className="px-2 py-1.5 text-zinc-500">{page} / {pages}</span>
-        {page < pages && <a href={`/cards?q=${encodeURIComponent(sp.q || "")}&page=${page + 1}`} className="rounded-lg border border-zinc-800 px-3 py-1.5 hover:border-amber-500/50">Siguiente →</a>}
+      <div className="mt-4 flex items-center gap-2 text-sm">
+        {page > 1 && <a href={`/cards?q=${encodeURIComponent(sp.q || "")}&page=${page - 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">← Anterior</a>}
+        <span className="px-2 text-[#aaaaaa]">{page} / {pages}</span>
+        {page < pages && <a href={`/cards?q=${encodeURIComponent(sp.q || "")}&page=${page + 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">Siguiente →</a>}
       </div>
     </div>
   );

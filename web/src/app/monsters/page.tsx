@@ -17,23 +17,23 @@ export default async function MonstersPage({
   const args: string[] = q ? [`%${q}%`] : [];
   const total = (db.prepare(`SELECT COUNT(*) c FROM monsters ${whereSql}`).get(...args) as { c: number }).c;
   const rows = db.prepare(
-    `SELECT id, name, level, is_mvp AS isMvp, hp, element FROM monsters ${whereSql}
+    `SELECT id, name, level, is_mvp AS isMvp, hp, element, icon FROM monsters ${whereSql}
      ORDER BY is_mvp DESC, level LIMIT ? OFFSET ?`
   ).all(...args, perPage, (page - 1) * perPage) as Array<Record<string, unknown>>;
   const pages = Math.max(1, Math.ceil(total / perPage));
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Monstruos <span className="text-sm font-normal text-zinc-500">({total})</span></h1>
-      <form className="mb-4 flex gap-2" action="/monsters">
+      <h1 className="mb-2 text-2xl font-bold text-[#080706]">Monstruos <span className="text-sm font-normal text-[#aaaaaa]">({total.toLocaleString("es")})</span></h1>
+      <form className="mb-4 flex flex-wrap gap-2" action="/monsters">
         <input name="q" defaultValue={sp.q} placeholder="Filtrar por nombre…"
-          className="w-64 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-amber-500/50" />
-        <button className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-300 hover:bg-amber-500/20">Filtrar</button>
+          className="w-64 rounded-full border border-[rgba(78,75,77,0.15)] bg-white px-4 py-2 text-sm" />
+        <button className="rounded-full bg-[#080706] px-4 py-2 text-sm text-[#f5f4f0] transition hover:bg-[#2a2826]">Filtrar</button>
       </form>
 
       <div className="panel overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="border-b border-zinc-800 text-left text-xs uppercase tracking-wider text-zinc-500">
+          <thead className="border-b border-[rgba(78,75,77,0.12)] text-left text-xs uppercase tracking-wider text-[#aaaaaa]">
             <tr>
               <th className="px-4 py-3">Monstruo</th>
               <th className="px-4 py-3">Nivel</th>
@@ -43,24 +43,29 @@ export default async function MonstersPage({
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={String(r.id)} className="border-b border-zinc-900 hover:bg-zinc-900/60">
+              <tr key={String(r.id)} className="border-b border-[rgba(78,75,77,0.07)] transition hover:bg-[rgba(78,75,77,0.04)]">
                 <td className="px-4 py-2">
-                  {r.isMvp ? <span className="mr-2 rounded bg-red-500/20 px-1 text-[10px] font-bold text-red-400">MVP</span> : null}
-                  <a href={`/monsters/${r.id}`} className="hover:text-amber-300 hover:underline">{String(r.name)}</a>
+                  <a href={`/monsters/${r.id}`} className="flex items-center gap-3">
+                    <span className="icon-frame h-9 w-9 shrink-0">
+                      {r.icon ? <img src={String(r.icon)} alt="" width={32} height={32} loading="lazy" /> : null}
+                    </span>
+                    {r.isMvp ? <span className="rounded-full bg-[#b8292f]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#b8292f]">MVP</span> : null}
+                    <span className="hover:underline">{String(r.name)}</span>
+                  </a>
                 </td>
-                <td className="px-4 py-2 text-zinc-400">{String(r.level)}</td>
-                <td className="px-4 py-2 text-zinc-400">{Number(r.hp).toLocaleString("es")}</td>
-                <td className="px-4 py-2 text-zinc-400">{String(r.element)}</td>
+                <td className="px-4 py-2 text-[#aaaaaa]">{String(r.level)}</td>
+                <td className="px-4 py-2 text-[#aaaaaa]">{Number(r.hp).toLocaleString("es")}</td>
+                <td className="px-4 py-2 text-[#aaaaaa]">{String(r.element)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="mt-4 flex gap-2 text-sm">
-        {page > 1 && <a href={`/monsters?q=${encodeURIComponent(sp.q || "")}&page=${page - 1}`} className="rounded-lg border border-zinc-800 px-3 py-1.5 hover:border-amber-500/50">← Anterior</a>}
-        <span className="px-2 py-1.5 text-zinc-500">{page} / {pages}</span>
-        {page < pages && <a href={`/monsters?q=${encodeURIComponent(sp.q || "")}&page=${page + 1}`} className="rounded-lg border border-zinc-800 px-3 py-1.5 hover:border-amber-500/50">Siguiente →</a>}
+      <div className="mt-4 flex items-center gap-2 text-sm">
+        {page > 1 && <a href={`/monsters?q=${encodeURIComponent(sp.q || "")}&page=${page - 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">← Anterior</a>}
+        <span className="px-2 text-[#aaaaaa]">{page} / {pages}</span>
+        {page < pages && <a href={`/monsters?q=${encodeURIComponent(sp.q || "")}&page=${page + 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">Siguiente →</a>}
       </div>
     </div>
   );

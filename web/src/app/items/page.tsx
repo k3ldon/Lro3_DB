@@ -31,25 +31,25 @@ export default async function ItemsPage({
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold">Ítems <span className="text-sm font-normal text-zinc-500">({total})</span></h1>
-      <form className="mb-4 flex gap-2" action="/items">
+      <h1 className="mb-2 text-2xl font-bold text-[#080706]">Ítems <span className="text-sm font-normal text-[#aaaaaa]">({total.toLocaleString("es")})</span></h1>
+      <form className="mb-4 flex flex-wrap gap-2" action="/items">
         <input
           name="q" defaultValue={sp.q} placeholder="Filtrar por nombre…"
-          className="w-64 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-amber-500/50"
+          className="w-64 rounded-full border border-[rgba(78,75,77,0.15)] bg-white px-4 py-2 text-sm"
         />
         <select name="quality" defaultValue={String(quality || "")}
-          className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm">
+          className="rounded-full border border-[rgba(78,75,77,0.15)] bg-white px-3 py-2 text-sm">
           <option value="">Toda calidad</option>
           {[1, 2, 3, 4, 5, 6].map((qv) => <option key={qv} value={qv}>{qualityLabel(qv)}</option>)}
         </select>
-        <button className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-300 hover:bg-amber-500/20">
+        <button className="rounded-full bg-[#080706] px-4 py-2 text-sm text-[#f5f4f0] transition hover:bg-[#2a2826]">
           Filtrar
         </button>
       </form>
 
       <div className="panel overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="border-b border-zinc-800 text-left text-xs uppercase tracking-wider text-zinc-500">
+          <thead className="border-b border-[rgba(78,75,77,0.12)] text-left text-xs uppercase tracking-wider text-[#aaaaaa]">
             <tr>
               <th className="px-4 py-3">Ítem</th>
               <th className="px-4 py-3">Calidad</th>
@@ -60,24 +60,29 @@ export default async function ItemsPage({
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={String(r.id)} className="border-b border-zinc-900 hover:bg-zinc-900/60">
+              <tr key={String(r.id)} className="border-b border-[rgba(78,75,77,0.07)] transition hover:bg-[rgba(78,75,77,0.04)]">
                 <td className="px-4 py-2">
-                  <a href={`/items/${r.id}`} className={`quality-${r.quality} q-text hover:underline`}>{String(r.name)}</a>
+                  <a href={`/items/${r.id}`} className="flex items-center gap-3">
+                    <span className={`quality-${r.quality} icon-frame q-border h-9 w-9 shrink-0`}>
+                      {r.icon ? <img src={String(r.icon)} alt="" width={32} height={32} loading="lazy" /> : null}
+                    </span>
+                    <span className={`quality-${r.quality} q-text hover:underline`}>{String(r.name)}</span>
+                  </a>
                 </td>
                 <td className="px-4 py-2"><QualityBadge quality={Number(r.quality)} /></td>
-                <td className="px-4 py-2 text-zinc-400">{String(r.type)}</td>
-                <td className="px-4 py-2 text-zinc-400">{String(r.levelNeed)}</td>
-                <td className="px-4 py-2 text-zinc-400">{r.tradeable ? "Sí" : "No"}</td>
+                <td className="px-4 py-2 text-[#aaaaaa]">{String(r.type)}</td>
+                <td className="px-4 py-2 text-[#aaaaaa]">{String(r.levelNeed)}</td>
+                <td className="px-4 py-2 text-[#aaaaaa]">{r.tradeable ? "Sí" : "No"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="mt-4 flex gap-2 text-sm">
-        {page > 1 && <a href={`/items?q=${encodeURIComponent(sp.q || "")}&quality=${quality}&page=${page - 1}`} className="rounded-lg border border-zinc-800 px-3 py-1.5 hover:border-amber-500/50">← Anterior</a>}
-        <span className="px-2 py-1.5 text-zinc-500">{page} / {pages}</span>
-        {page < pages && <a href={`/items?q=${encodeURIComponent(sp.q || "")}&quality=${quality}&page=${page + 1}`} className="rounded-lg border border-zinc-800 px-3 py-1.5 hover:border-amber-500/50">Siguiente →</a>}
+      <div className="mt-4 flex items-center gap-2 text-sm">
+        {page > 1 && <a href={`/items?q=${encodeURIComponent(sp.q || "")}&quality=${quality}&page=${page - 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">← Anterior</a>}
+        <span className="px-2 text-[#aaaaaa]">{page} / {pages}</span>
+        {page < pages && <a href={`/items?q=${encodeURIComponent(sp.q || "")}&quality=${quality}&page=${page + 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">Siguiente →</a>}
       </div>
     </div>
   );
