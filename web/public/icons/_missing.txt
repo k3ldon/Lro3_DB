@@ -1,0 +1,3 @@
+headicon_npc_empathizer
+headicon_npc_poring
+temphead_npc_30
