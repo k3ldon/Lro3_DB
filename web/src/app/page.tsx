@@ -18,11 +18,6 @@ export default function Home() {
     db,
     `SELECT id, name, level, is_mvp AS isMvp, icon FROM monsters WHERE icon != '' ORDER BY is_mvp DESC, hp DESC LIMIT 4`
   );
-  const topCards = sample(
-    db,
-    `SELECT card_id AS cardId, name, quality, icon, MAX(power) AS power FROM cards
-     WHERE icon != '' GROUP BY card_id ORDER BY power DESC LIMIT 4`
-  );
 
   const stats = [
     { label: "Ítems", value: count("items"), href: "/items" },
@@ -32,92 +27,175 @@ export default function Home() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Hero: obsidian bento */}
-      <section className="panel-dark relative overflow-hidden p-10">
-        <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[#927e72]/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-[#2d56a6]/15 blur-3xl" />
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#927e72]">Ragnarok Online 3</p>
-        <h1 className="mt-3 max-w-2xl text-4xl font-black tracking-tight text-[#f5f4f0] sm:text-5xl">
-          La base de datos viva de RO3.
-        </h1>
-        <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#aaaaaa]">
-          Ítems, monstruos, MVPs y cartas extraídos directamente de los datos del emulador,
-          con iconos originales del cliente y tablas de drop completas.
-        </p>
-        <p className="mt-6 text-xs text-[#6b686a]">
-          Pulsa <kbd className="rounded border border-[#3a3835] bg-[#161513] px-1.5 py-0.5 text-[10px] text-[#aaaaaa]">Ctrl K</kbd> para buscar cualquier cosa.
-        </p>
-      </section>
-
-      {/* Stats row */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((s) => (
-          <a key={s.label} href={s.href} className="panel p-6 text-center transition hover:shadow-md">
-            <div className="text-3xl font-bold text-[#080706]">{s.value.toLocaleString("es")}</div>
-            <div className="mt-1 text-sm text-[#aaaaaa]">{s.label}</div>
-          </a>
-        ))}
-      </section>
-
-      {/* Bento: items + monsters */}
-      <section className="grid gap-4 lg:grid-cols-3">
-        <a href="/items" className="panel group p-6 transition hover:shadow-md lg:col-span-2">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-bold text-[#080706]">Ítems destacados</h2>
-            <span className="text-xs text-[#927e72] group-hover:underline">Ver todos →</span>
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6">
-            {topItems.map((it) => (
-              <div key={String(it.id)} className={`quality-${it.quality} flex flex-col items-center gap-1.5`}>
-                <div className="icon-frame q-border h-16 w-16 border-2">
-                  {it.icon ? <img src={String(it.icon)} alt="" width={56} height={56} loading="lazy" /> : null}
-                </div>
-                <span className="q-text line-clamp-2 text-center text-[11px] leading-tight">{String(it.name)}</span>
-              </div>
-            ))}
-          </div>
-        </a>
-
-        <a href="/monsters" className="panel group p-6 transition hover:shadow-md">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-bold text-[#080706]">Monstruos</h2>
-            <span className="text-xs text-[#927e72] group-hover:underline">Ver →</span>
-          </div>
-          <ul className="mt-4 space-y-2.5">
-            {topMonsters.map((m) => (
-              <li key={String(m.id)} className="flex items-center gap-3">
-                <div className="icon-frame h-9 w-9 shrink-0">
-                  {m.icon ? <img src={String(m.icon)} alt="" width={32} height={32} loading="lazy" /> : null}
-                </div>
-                <span className="truncate text-sm">{String(m.name)}</span>
-                <span className="ml-auto text-xs text-[#aaaaaa]">Nv. {String(m.level)}</span>
-              </li>
-            ))}
-          </ul>
-        </a>
-      </section>
-
-      {/* Cards bento */}
-      <section className="panel p-6">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-lg font-bold text-[#080706]">Cartas más potentes</h2>
-          <a href="/cards" className="text-xs text-[#927e72] hover:underline">Ver todas →</a>
+    <div style={{ paddingRight: 20 }}>
+      <div>
+        <div className="smoothHeader" style={{ marginBottom: 12 }}>
+          Bienvenido a <span className="ffruit">ERODS-RO3</span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {topCards.map((c) => (
-            <a key={String(c.cardId)} href={`/cards/${c.cardId}`} className="flex items-center gap-3 rounded-xl border border-[rgba(78,75,77,0.12)] p-3 transition hover:shadow-sm">
-              <div className={`quality-${c.quality} icon-frame q-border h-12 w-12`}>
-                {c.icon ? <img src={String(c.icon)} alt="" width={44} height={44} loading="lazy" /> : null}
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-medium">{String(c.name)}</div>
-                <div className="text-xs text-[#aaaaaa]">{Number(c.power)} power</div>
-              </div>
-            </a>
-          ))}
+
+        <div style={{ width: 700 }}>
+          La base de datos de Ragnarok Online 3: ítems, monstruos, MVPs y cartas extraídos
+          directamente de los datos del emulador, con iconos originales del cliente y tablas
+          de drop completas.
         </div>
-      </section>
+
+        <br />
+
+        <table style={{ width: "100%" }}>
+          <tbody>
+            <tr>
+              {stats.map((s) => (
+                <td key={s.label} style={{ textAlign: "center", padding: "10px" }}>
+                  <a href={s.href} style={{ textDecoration: "none" }}>
+                    <span style={{ fontSize: "20pt", fontWeight: "bold" }}>{s.value.toLocaleString("es")}</span>
+                    <br />
+                    <span className="grayclr">{s.label}</span>
+                  </a>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="exlinesp" style={{ margin: "20px 0" }} />
+
+      {/* Media links — port of layout/default.php */}
+      <table style={{ marginLeft: 125 }}>
+        <tbody>
+          <tr>
+            <td>
+              <table>
+                <tbody>
+                  <tr>
+                    <td rowSpan={2} style={{ paddingRight: 10, textAlign: "center" }}>
+                      <div className="icon-frame" style={{ width: 100, height: 100 }}>
+                        {topMonsters[0]?.icon ? (
+                          <img src={String(topMonsters[0].icon)} alt="Monster" width={96} height={96} />
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span className="ffruit">Búsqueda de Monstruos</span>
+                      <br />
+                      <br />
+                      <span className="grayclr">
+                        Consulta stats, elementos y drops de todos los monstruos de RO3.
+                      </span>
+                      <br />
+                      <br />
+                      <a href="/monsters" className="random">
+                        <span className="ffruit">→ Ir</span>
+                      </a>
+                      <br />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+
+            <td>
+              <table>
+                <tbody>
+                  <tr>
+                    <td rowSpan={2} style={{ paddingRight: 20, textAlign: "center" }}>
+                      <div className="icon-frame" style={{ width: 100, height: 100 }}>
+                        {topItems[0]?.icon ? (
+                          <img src={String(topItems[0].icon)} alt="Item" width={96} height={96} />
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span className="ffruit">Búsqueda de Ítems</span>
+                      <br />
+                      <br />
+                      <span className="grayclr">
+                        Equipo, consumibles y materiales con calidad, afijos y origen.
+                      </span>
+                      <br />
+                      <br />
+                      <a href="/items" className="random">
+                        <span className="ffruit">→ Ir</span>
+                      </a>
+                      <br />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <table>
+                <tbody>
+                  <tr>
+                    <td rowSpan={2} style={{ paddingRight: 10, textAlign: "center" }}>
+                      <div className="icon-frame" style={{ width: 100, height: 100 }}>
+                        {topMonsters[1]?.icon ? (
+                          <img src={String(topMonsters[1].icon)} alt="MVP" width={96} height={96} />
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span className="ffruit">Boss Monsters (MvP)</span>
+                      <br />
+                      <br />
+                      <span className="grayclr">
+                        Jefes mundiales con tiempo de reaparición y recompensas raras.
+                      </span>
+                      <br />
+                      <br />
+                      <a href="/mvps" className="random">
+                        <span className="ffruit">→ Ir</span>
+                      </a>
+                      <br />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+
+            <td>
+              <table>
+                <tbody>
+                  <tr>
+                    <td rowSpan={2} style={{ paddingRight: 20, textAlign: "center" }}>
+                      <div className="icon-frame" style={{ width: 100, height: 100 }}>
+                        {topItems[1]?.icon ? (
+                          <img src={String(topItems[1].icon)} alt="Card" width={96} height={96} />
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span className="ffruit">Cartas</span>
+                      <br />
+                      <br />
+                      <span className="grayclr">
+                        Niveles, tiers, power score y atributos de todas las cartas.
+                      </span>
+                      <br />
+                      <br />
+                      <a href="/cards" className="random">
+                        <span className="ffruit">→ Ir</span>
+                      </a>
+                      <br />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }

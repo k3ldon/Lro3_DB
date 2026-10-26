@@ -44,11 +44,11 @@ export function CommandPalette() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-full border border-[rgba(78,75,77,0.15)] bg-white/70 px-3 py-1.5 text-sm text-[#4e4b4d] transition hover:border-[#927e72]"
+        className="ml-4 inline-flex items-center gap-2 border-0 bg-transparent px-1 py-0 text-sm text-[#ffffff] underline transition hover:text-[#ff6600]"
       >
-        <Search size={14} />
+        <Search size={12} />
         <span className="hidden sm:inline">Buscar…</span>
-        <kbd className="ml-1 hidden rounded border border-[rgba(78,75,77,0.2)] bg-white px-1.5 text-[10px] sm:inline">Ctrl K</kbd>
+        <kbd className="ml-1 hidden rounded border border-[#666666] bg-transparent px-1.5 text-[10px] sm:inline">Ctrl K</kbd>
       </button>
       <Command.Dialog
         open={open}

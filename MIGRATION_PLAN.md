@@ -1,7 +1,7 @@
 # PLAN MAESTRO DE MIGRACIÓN Y ARQUITECTURA: ERODS A RAGNAROK ONLINE 3 (RO3)
 
-**Versión:** 1.0.0-draft  
-**Estado:** Fase 1 completada (Auditoría, Mapeo y Arquitectura)  
+**Versión:** 1.1.0  
+**Estado:** Fases 1–3 completadas (Auditoría, ETL de monsters/items/cards/MVPs, extracción de assets e imágenes). Ver sección 8 para el estado real de implementación.  
 **Autor:** Arquitecto de Software Senior & Ingeniero de Datos  
 **Área de Trabajo:** `C:\Users\Carlos\Downloads\erods\Lro3_DB`  
 **Repositorio de Referencia:** `aethai/ro3emu-server` (`C:\Users\Carlos\Downloads\ro3emu-server`)  
@@ -364,3 +364,63 @@ CREATE TABLE `ro3_dungeons` (
 - [x] **Exploración de datos locales:** 517 tablas JSON y AssetBundles verificados en `RO3Emu-win-x64`.
 - [x] **Mapeo bidireccional de esquemas completado:** Definición clara de qué columnas se eliminan, cuáles se transforman y qué tablas nuevas se crean.
 - [x] **No modificación del código en producción:** El código original de ERODS permanece 100% intacto en esta Fase 1.
+
+---
+
+## 8. ESTADO DE IMPLEMENTACIÓN (ACTUALIZADO 2026-10-26)
+
+### 8.1 Sistema en producción
+
+La base de datos está desplegada y operativa en **https://db.lagnarok.online**:
+
+- **NUC:** `root@100.67.128.113`, Docker container `lro3db` (`127.0.0.1:3100:3000`, node:22-alpine).
+- **App:** `/opt/lro3db` en el NUC; SQLite en `/app/web/ro3.db` dentro del contenedor.
+- **Rebuild:** al reconstruir el contenedor hay que sincronizar `cp /opt/lro3db/web/scripts/build-db.mjs /opt/lro3db/scripts/` antes del build.
+- **Deploy de assets/datos:** tar + scp a `/opt/lro3db/web/public/assets` y `/opt/lro3db/data`, luego rebuild del contenedor.
+
+Cobertura actual: **532 monstruos (413 con icono, 136 iconos distintos), 17/17 MVPs, 3190 items, 968 cartas.**
+
+### 8.2 Pipeline implementado (workspace local)
+
+Workspace: `C:\Users\Carlos\Downloads\erods\Lro3_DB`.
+
+- **ETL (`scripts/ro3-migration/etl/extract_ro3.py`):** genera `web/data/ro3/monsters.json`, `mvps.json`, items y cards desde los JSON de `RO3Emu/data/config`. Incluye el cascade `MonsterIcons` para resolver iconos de monstruos:
+  1. Match difuso modelo→headicon: deriva el stem de `UnitConfig._kModelPath_Default` (p. ej. `model_monsterjunior_denirohigh` → `deniro`), con stripping de prefijos (`model_(monsterjunior|boss|npc|pet|monstersenior|monster)_`, prefijos narrativos `mainstory|substory|gvg|guild|event|side_`) y sufijos de calidad (`low|middle|high|fine\d*$`), contra los stems `headicon_monster_*` existentes (prefijo ≥ max(5, len-1)).
+  2. Mascotas: `model_pet_*` → `pet_icon_head_<n>.png` (100% existen).
+  3. Fallback: `_kHeadIcon` de `NPCConfig`.
+- **Extracción de iconos (`scripts/extract_icons.py`):** lee los contenedores VFS (`C:\Users\Carlos\Downloads\RO3Emu-win-x64\ro3_Data\StreamingAssets\VFS`, 4785 `.bundle`), usa UnityPy y SpriteAtlases (`MVP_Icon` incluido en `ATLAS_BUNDLES`), convierte a `.webp` en `web/public/assets/ro3/` (520 webp de monstruos).
+- **Builder de DB (`web/scripts/build-db.mjs`):** construye `ro3.db` con verificación `stemExists` de assets.
+
+### 8.3 Formato contenedor RO3V (descubrimiento clave)
+
+Los 4785 bundles son contenedores **RO3V**, no UnityFS planos:
+
+- Cabecera de 24 bytes: magic `RO3V`, offset/size del índice en bytes 8–24 (`<QQ`).
+- Índice: `<I` count + pares `<QQ` (hash, offset) + `<Q` total. El contenido UnityFS vive a partir de `offset_indice + size_indice + entry_offset`.
+- Los CABs referenciados por prefabs NO existen como archivos con nombre: las texturas/meshes viven como **entradas internas anónimas** de contenedores RO3V grandes (ej. `b632b60fdf084793.bundle`, 303MB, 1844 entradas). Solo se resuelven por índice hash+offset.
+
+### 8.4 Investigación de texturas 3D (conclusión: techo de arte alcanzado)
+
+Se investigó usar texturas de cuerpo de los modelos 3D como retratos para los monstruos sin headicon:
+
+- Inventario global: **2794 texturas `Model_*` ≥256px** extraídas escaneando los índices RO3V de todos los bundles (`tex_inventory.json`, 1558 stems únicos: `baphomethigh`, `mayafine`, `goblin*high`, etc.).
+- De los 104 monstruos aún sin icono, solo 25 tienen textura de cuerpo con match — y son estructuras de asedio/NPCs (`gate01middle`, `tank01fine`, `gvgjetpack`, renos, kafra), varios con falso positivo (`mainstorybucketlow` → `mainstorydenirohigh`).
+- Los 79 restantes son placeholders FX sin arte propio (`model_monsterjunior_kong` ×17, `fx_nightevent_*`, `fx_boss_*_skill_*`: "Agujero de gusano", "Colmena", etc.).
+- **Decisión:** el cascade está en su techo de arte de cliente (413/532). Los monstruos reales con textura ya tenían headicon; un pipeline de render 3D para estructuras no es proporcional. Pendiente opcional: placeholder visual genérico en la web para los 104 sin icono.
+
+### 8.5 Iconos: datos y límites
+
+- `_kHeadIcon` de `NPCConfig` son headicons de familia reutilizados (141 únicos para 532 monstruos) — el arte del cliente es así, no es un bug de datos.
+- Solo existen 209 stems únicos `headicon_monster_*` en el cliente; muchas variantes `_1`/`_2` de atlas (`MVP_Icon`) no existen en el VFS (14/209 stems tienen `_1`).
+- El prefab de un modelo (ej. `model_monsterjunior_lunatic.prefab`) puede no existir (181/182 prefabs presentes).
+
+### 8.6 Procedimiento de deploy (recordatorio)
+
+1. Correr ETL y extracción local → regenerar `ro3.db` y assets.
+2. `git commit` en `main` y push.
+3. Tar de assets + datos → scp al NUC (`/opt/lro3db/web/public/assets`, `/opt/lro3db/data`).
+4. `cp /opt/lro3db/web/scripts/build-db.mjs /opt/lro3db/scripts/`.
+5. Rebuild y restart del contenedor `lro3db`.
+6. Verificar `https://db.lagnarok.online/monsters` (200) y un asset de ejemplo (`headicon_monster_deniro.webp` → 200).
+
+Commits de referencia: `6e336f0` (icon cascade, 47 iconos), `52ca5d3` (matching difuso + atlas MVP_Icon, 41 iconos).

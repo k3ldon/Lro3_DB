@@ -24,48 +24,46 @@ export default async function MonstersPage({
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold text-[#080706]">Monstruos <span className="text-sm font-normal text-[#aaaaaa]">({total.toLocaleString("es")})</span></h1>
+      <h1 className="mb-2 text-2xl font-bold text-[#000000]">Monstruos <span className="text-sm font-normal text-[#666666]">({total.toLocaleString("es")})</span></h1>
       <form className="mb-4 flex flex-wrap gap-2" action="/monsters">
         <input name="q" defaultValue={sp.q} placeholder="Filtrar por nombre…"
-          className="w-64 rounded-full border border-[rgba(78,75,77,0.15)] bg-white px-4 py-2 text-sm" />
-        <button className="rounded-full bg-[#080706] px-4 py-2 text-sm text-[#f5f4f0] transition hover:bg-[#2a2826]">Filtrar</button>
+          className="w-64 border border-[#b4b4b4] px-2 py-1 text-sm" />
+        <button className="border-0 bg-[#ff6600] px-4 py-1 text-sm font-bold text-white">Filtrar</button>
       </form>
 
-      <div className="panel overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="border-b border-[rgba(78,75,77,0.12)] text-left text-xs uppercase tracking-wider text-[#aaaaaa]">
-            <tr>
-              <th className="px-4 py-3">Monstruo</th>
-              <th className="px-4 py-3">Nivel</th>
-              <th className="px-4 py-3">HP</th>
-              <th className="px-4 py-3">Elemento</th>
+      <table className="whitetable alignment1" cellSpacing={1}>
+        <thead>
+          <tr className="grayrow">
+            <th className="px-4 py-1 text-left">Monstruo</th>
+            <th className="px-4 py-1">Nivel</th>
+            <th className="px-4 py-1">HP</th>
+            <th className="px-4 py-1">Elemento</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={String(r.id)}>
+              <td className="px-4 py-1">
+                <a href={`/monsters/${r.id}`} className="flex items-center gap-2" style={{ textDecoration: "none" }}>
+                  <span className="icon-frame h-6 w-6 shrink-0">
+                    {r.icon ? <img src={String(r.icon)} alt="" width={24} height={24} loading="lazy" /> : null}
+                  </span>
+                  {r.isMvp ? <span className="ffruit">[MVP]</span> : null}
+                  <span className="nameclr hover:underline">{String(r.name)}</span>
+                </a>
+              </td>
+              <td className="px-4 py-1 text-[#666666]">{String(r.level)}</td>
+              <td className="px-4 py-1 text-[#666666]">{Number(r.hp).toLocaleString("es")}</td>
+              <td className="px-4 py-1 text-[#666666]">{String(r.element)}</td>
             </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={String(r.id)} className="border-b border-[rgba(78,75,77,0.07)] transition hover:bg-[rgba(78,75,77,0.04)]">
-                <td className="px-4 py-2">
-                  <a href={`/monsters/${r.id}`} className="flex items-center gap-3">
-                    <span className="icon-frame h-9 w-9 shrink-0">
-                      {r.icon ? <img src={String(r.icon)} alt="" width={32} height={32} loading="lazy" /> : null}
-                    </span>
-                    {r.isMvp ? <span className="rounded-full bg-[#b8292f]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#b8292f]">MVP</span> : null}
-                    <span className="hover:underline">{String(r.name)}</span>
-                  </a>
-                </td>
-                <td className="px-4 py-2 text-[#aaaaaa]">{String(r.level)}</td>
-                <td className="px-4 py-2 text-[#aaaaaa]">{Number(r.hp).toLocaleString("es")}</td>
-                <td className="px-4 py-2 text-[#aaaaaa]">{String(r.element)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
 
       <div className="mt-4 flex items-center gap-2 text-sm">
-        {page > 1 && <a href={`/monsters?q=${encodeURIComponent(sp.q || "")}&page=${page - 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">← Anterior</a>}
-        <span className="px-2 text-[#aaaaaa]">{page} / {pages}</span>
-        {page < pages && <a href={`/monsters?q=${encodeURIComponent(sp.q || "")}&page=${page + 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">Siguiente →</a>}
+        {page > 1 && <a href={`/monsters?q=${encodeURIComponent(sp.q || "")}&page=${page - 1}`} className="random">← Anterior</a>}
+        <span className="px-2 text-[#666666]">{page} / {pages}</span>
+        {page < pages && <a href={`/monsters?q=${encodeURIComponent(sp.q || "")}&page=${page + 1}`} className="random">Siguiente →</a>}
       </div>
     </div>
   );

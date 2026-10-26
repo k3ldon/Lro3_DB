@@ -27,37 +27,43 @@ export default async function CardsPage({
 
   return (
     <div>
-      <h1 className="mb-2 text-2xl font-bold text-[#080706]">Cartas <span className="text-sm font-normal text-[#aaaaaa]">({total.toLocaleString("es")})</span></h1>
+      <h1 className="mb-2 text-2xl font-bold text-[#000000]">Cartas <span className="text-sm font-normal text-[#666666]">({total.toLocaleString("es")})</span></h1>
       <form className="mb-4 flex flex-wrap gap-2" action="/cards">
         <input name="q" defaultValue={sp.q} placeholder="Filtrar por nombre…"
-          className="w-64 rounded-full border border-[rgba(78,75,77,0.15)] bg-white px-4 py-2 text-sm" />
-        <button className="rounded-full bg-[#080706] px-4 py-2 text-sm text-[#f5f4f0] transition hover:bg-[#2a2826]">Filtrar</button>
+          className="w-64 border border-[#b4b4b4] px-2 py-1 text-sm" />
+        <button className="border-0 bg-[#ff6600] px-4 py-1 text-sm font-bold text-white">Filtrar</button>
       </form>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {rows.map((c) => (
-          <a key={String(c.cardId)} href={`/cards/${c.cardId}`}
-            className={`quality-${c.quality} panel p-4 transition hover:shadow-md`}>
-            <div className="flex items-center gap-3">
-              <span className={`quality-${c.quality} icon-frame q-border h-14 w-14 border-2`}>
-                {c.icon ? <img src={String(c.icon)} alt="" width={48} height={48} loading="lazy" /> : null}
-              </span>
-              <div className="min-w-0">
-                <h2 className="q-text truncate font-semibold">{String(c.name)}</h2>
-                <div className="mt-1 flex gap-1.5 text-xs text-[#aaaaaa]">
-                  <span className="stat-chip">{Number(c.power)} power</span>
-                  {Number(c.maxTier) > 0 && <span className="stat-chip">T{String(c.maxTier)}</span>}
-                </div>
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
+      <table className="whitetable alignment1" cellSpacing={1}>
+        <thead>
+          <tr className="grayrow">
+            <th className="px-4 py-1 text-left">Carta</th>
+            <th className="px-4 py-1">Power</th>
+            <th className="px-4 py-1">Tier máx.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr key={String(c.cardId)}>
+              <td className="px-4 py-1">
+                <a href={`/cards/${c.cardId}`} className="flex items-center gap-2" style={{ textDecoration: "none" }}>
+                  <span className={`quality-${c.quality} icon-frame q-border h-6 w-6 shrink-0`}>
+                    {c.icon ? <img src={String(c.icon)} alt="" width={24} height={24} loading="lazy" /> : null}
+                  </span>
+                  <span className={`quality-${c.quality} nameclr hover:underline`}>{String(c.name)}</span>
+                </a>
+              </td>
+              <td className="px-4 py-1 text-[#666666]">{Number(c.power)}</td>
+              <td className="px-4 py-1 text-[#666666]">{Number(c.maxTier) > 0 ? `T${String(c.maxTier)}` : "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <div className="mt-4 flex items-center gap-2 text-sm">
-        {page > 1 && <a href={`/cards?q=${encodeURIComponent(sp.q || "")}&page=${page - 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">← Anterior</a>}
-        <span className="px-2 text-[#aaaaaa]">{page} / {pages}</span>
-        {page < pages && <a href={`/cards?q=${encodeURIComponent(sp.q || "")}&page=${page + 1}`} className="pill-link border border-[rgba(78,75,77,0.15)] bg-white">Siguiente →</a>}
+        {page > 1 && <a href={`/cards?q=${encodeURIComponent(sp.q || "")}&page=${page - 1}`} className="random">← Anterior</a>}
+        <span className="px-2 text-[#666666]">{page} / {pages}</span>
+        {page < pages && <a href={`/cards?q=${encodeURIComponent(sp.q || "")}&page=${page + 1}`} className="random">Siguiente →</a>}
       </div>
     </div>
   );

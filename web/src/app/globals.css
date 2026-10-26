@@ -1,17 +1,231 @@
 @import "tailwindcss";
 
+/* ============================================================
+   ERODS-FUSION legacy layout port (layout/style.css, XHTML era)
+   960px fixed shell, Arial 8pt, simoni nav, whitetable grids.
+   ============================================================ */
+
 :root {
-  --background: #f0eee8;
-  --card: #faf9f5;
-  --border: rgba(78, 75, 77, 0.12);
-  --obsidian: #080706;
-  --secondary: #4e4b4d;
-  --muted: #aaaaaa;
-  --taupe: #927e72;
-  --sapphire: #2d56a6;
+  --background: #ffffff;
+  --line: #d2d2d2;
+  --dark: #666666;
+  --accent: #ff6600;
+  --nameclr: #330066;
 }
 
-/* RO3 quality colors (ItemConfig._iQuality) */
+body {
+  background: #ffffff repeat-x;
+  font-size: 8pt;
+  color: #000000;
+  font-family: "Arial", sans-serif;
+  font-weight: 400;
+  line-height: 13px;
+  margin: 0 0 10px 0;
+}
+
+h1 {
+  font-family: "Arial Narrow", Arial, sans-serif;
+  font-size: 16pt;
+  color: #000000;
+}
+
+a {
+  cursor: pointer;
+  color: #000000;
+  text-decoration: underline;
+}
+
+a img {
+  border: none;
+}
+
+input[type="text"], select {
+  background: #ffffff;
+  color: #000000;
+  font-size: 12px;
+}
+
+::selection { background: rgba(255, 102, 0, 0.25); }
+
+/* General classes */
+
+.grayclr {
+  color: #666666;
+}
+
+.smoothHeader {
+  font-size: 16pt;
+  font-family: "Arial Narrow", Arial, sans-serif;
+}
+
+.ffruit {
+  color: #ff6600;
+  font-weight: bold;
+  font-family: "Arial", sans-serif;
+  font-size: 12px;
+}
+
+a.random {
+  color: #000000;
+  text-decoration: none;
+}
+
+a.random:hover {
+  color: #330066;
+  text-decoration: underline;
+}
+
+/* Spacer liners */
+
+.exlinesp, .exlinespd {
+  height: 1px;
+  width: 99%;
+  background: #d2d2d2;
+  margin: 0 auto;
+}
+
+.exlinespd {
+  background: #666666;
+}
+
+/* Main navigation shell (960px) */
+
+#main {
+  background: #ffffff;
+  margin: 0 auto;
+  width: 960px;
+  padding: 0 0 10px 0;
+}
+
+#main a {
+  color: #000000;
+  text-decoration: underline;
+}
+
+div.simoni {
+  padding: 5px 10px 5px 10px;
+  border-bottom: solid 1px #d8d8d8;
+  width: 121px;
+  background: #ffffff;
+  text-align: center;
+}
+
+div.simoni:last-child {
+  border-bottom: 0;
+}
+
+div.simoni a {
+  color: #000000;
+  text-decoration: none !important;
+  display: block;
+}
+
+div.simoni:hover {
+  background: #ff6600;
+}
+
+div.simoni:hover a {
+  color: #ffffff !important;
+  font-weight: bold;
+}
+
+/* Main content wrap */
+
+#necky_nuts {
+  background: #ffffff;
+  margin: 0 auto;
+  width: 960px;
+  padding: 10px 0 10px 0;
+  min-height: 200px;
+}
+
+.inpadding {
+  padding: 0 10px 0 10px;
+}
+
+/* Top black bar */
+
+.topbar {
+  text-align: right;
+  padding: 5px 10px 5px 10px;
+  background: #000000;
+  color: #ffffff;
+  font-size: 8pt;
+}
+
+.topbar a {
+  color: #ffffff;
+  margin-left: 20px;
+  text-decoration: none;
+}
+
+.topbar a:hover {
+  text-decoration: underline;
+}
+
+.topbar a.loginLink {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+/* Tables: whitetable + grayrow (legacy look) */
+
+.whitetable {
+  width: 100%;
+  margin-bottom: 25px;
+  text-align: center;
+  color: #666666;
+  background: #cfcfcf;
+  border: solid 0px #cfcfcf;
+}
+
+.whitetable tr {
+  background: #ffffff;
+}
+
+.whitetable td {
+  padding: 3px;
+  border: 0;
+}
+
+.whitetable tr.grayrow {
+  background: #e6e6e6;
+  color: #333333;
+  font-size: 11px;
+}
+
+.whitetable tr.blackrow {
+  background: #666666;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.alignment1, .td_center {
+  text-align: left;
+}
+
+.tdblue {
+  text-align: left;
+}
+
+.nameclr {
+  color: #330066;
+  text-decoration: none;
+}
+
+.mobdrops a {
+  color: #666666;
+  text-decoration: none;
+}
+
+.mobdrops a:hover {
+  text-decoration: underline;
+  color: #330066;
+}
+
+/* Quality colors (ItemConfig._iQuality) — kept from RO3 data model */
+
 .quality-1 { --q: #aaaaaa; }
 .quality-2 { --q: #3b7a57; }
 .quality-3 { --q: #2d56a6; }
@@ -19,75 +233,26 @@
 .quality-5 { --q: #c87d28; }
 .quality-6 { --q: #b8292f; }
 
-body {
-  background: var(--background);
-  color: var(--secondary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-
-::selection { background: rgba(146, 126, 114, 0.35); }
-
 .q-border { border-color: color-mix(in srgb, var(--q) 55%, transparent); }
 .q-text { color: var(--q); }
 
-.panel {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  box-shadow: 0 1px 2px rgba(78, 75, 77, 0.06);
-}
-
-.panel-dark {
-  background: var(--obsidian);
-  color: #f5f4f0;
-  border-radius: 1.25rem;
-}
-
-.stat-chip {
-  border: 1px solid var(--border);
-  background: var(--card);
-  border-radius: 9999px;
-  padding: 0.125rem 0.625rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.pill-nav {
-  position: sticky;
-  top: 0.75rem;
-  z-index: 40;
-  margin: 0.75rem auto 0;
-  width: fit-content;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: color-mix(in srgb, var(--card) 85%, transparent);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-  border-radius: 9999px;
-  padding: 0.375rem 0.5rem;
-  box-shadow: 0 4px 24px rgba(8, 7, 6, 0.08);
-}
-
-.pill-link {
-  border-radius: 9999px;
-  padding: 0.375rem 0.875rem;
-  font-size: 0.8125rem;
-  color: var(--secondary);
-  transition: background 0.15s ease;
-}
-.pill-link:hover { background: rgba(78, 75, 77, 0.08); }
-
-input, select, button { outline: none; }
-input:focus-visible, select:focus-visible { border-color: var(--taupe) !important; }
+/* Icon frame kept subtle to not fight the legacy tables */
 
 .icon-frame {
   background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border: 1px solid #cfcfcf;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
+
 .icon-frame img { image-rendering: auto; }
+
+/* Footer */
+
+#finalEnding {
+  color: #666666;
+  font-size: 8pt;
+  font-family: "Arial", sans-serif;
+}
