@@ -143,8 +143,9 @@ def model_stem(units, npc) -> str:
 
 
 class MonsterIcons:
-    """Resolve monster icons by priority: derived-from-model headicon, then
-    NPCConfig._kHeadIcon (family-shared UI art), else ''."""
+    """Resolve monster icons: fuzzy-match the unit model name against the
+    headicon_monster_* universe in the VFS (client art is keyed by monster
+    family, not by NPC row), then pets, then NPCConfig._kHeadIcon."""
 
     def __init__(self, units):
         import sys as _sys
@@ -162,7 +163,31 @@ class MonsterIcons:
         except Exception as e:
             print(f"  warn: VFS unavailable ({e}), falling back to _kHeadIcon")
             self.vfs = None
+        self.stems: list[str] = []
+        if self.vfs:
+            self.stems = self._discover_stems()
+            print(f"  monster icon universe: {len(self.stems)} stems")
         self._cache: dict[int, str] = {}
+
+    def _discover_stems(self) -> list[str]:
+        """Probe plausible headicon_monster_<stem>.png names from model paths."""
+        stems = set()
+        for u in self.units.values():
+            m = (u.get("_kModelPath_Default") or "")
+            if not m.startswith("model_"):
+                continue
+            b = re.sub(r"^model_(monsterjunior|boss|npc|pet|monstersenior|monster)_", "", m.replace(".prefab", ""))
+            q = re.sub(r"(low|middle|high|fine)\d*$", "", b)
+            for target in (q, b):
+                for pre in ("mainstory", "substory", "gvg", "guild", "event", "world",
+                            "tower", "temple", "park", "payon", "prontera", "izlude",
+                            "glastheim", "gvgtarget", "gvt", "pvp", "tutorial"):
+                    if target.startswith(pre):
+                        target = target[len(pre):]
+                target = re.sub(r"\d+$", "", target)
+                if len(target) >= 4:
+                    stems.add(target)
+        return sorted(s for s in stems if self.vfs.raw(f"headicon_monster_{s}.png"))
 
     def resolve(self, npc) -> str:
         uid = npc.get("_iUnitID")
@@ -173,10 +198,10 @@ class MonsterIcons:
             model = model_stem(self.units, npc)
             if model.startswith("model_pet_"):
                 cand = f"pet_icon_head_{model.rsplit('_', 1)[-1]}.png"
+                if self._exists(cand):
+                    icon = cand
             else:
-                cand = self._from_model(model)
-            if cand and self._exists(cand):
-                icon = cand
+                icon = self._from_model(model) or ""
         if not icon:
             icon = (npc.get("_kHeadIcon") or "").split("/")[-1]
         self._cache[uid] = icon
@@ -185,21 +210,34 @@ class MonsterIcons:
     def _from_model(self, model: str) -> str | None:
         if not model.startswith("model_"):
             return None
-        base = re.sub(r"^model_(monsterjunior|boss|npc|pet)_", "", model)
-        for cand in (
-            f"headicon_monster_{base}.png",
-            f"headicon_monster_{base}_1.png",
-        ):
-            if self._exists(cand):
-                return cand
-        stripped = re.sub(r"(low|middle|high|fine)$", "", base)
-        if stripped != base:
-            for cand in (
-                f"headicon_monster_{stripped}.png",
-                f"headicon_monster_{stripped}_1.png",
-            ):
-                if self._exists(cand):
-                    return cand
+        b = re.sub(r"^model_(monsterjunior|boss|npc|pet|monstersenior|monster)_", "", model)
+        targets = []
+        for t in (re.sub(r"(low|middle|high|fine)\d*$", "", b), b):
+            for pre in ("mainstory", "substory", "gvg", "guild", "event", "world",
+                        "tower", "temple", "park", "payon", "prontera", "izlude",
+                        "glastheim", "gvgtarget", "gvt", "pvp", "tutorial"):
+                if t.startswith(pre):
+                    t = t[len(pre):]
+            targets.append(re.sub(r"\d+$", "", t))
+        seen = set()
+        for target in targets:
+            target = re.sub(r"\d+$", "", target)
+            if target in seen:
+                continue
+            seen.add(target)
+            best, blen = None, 0
+            for s in self.stems:
+                n = 0
+                for a, c in zip(target, s):
+                    if a != c:
+                        break
+                    n += 1
+                if n >= len(s) - 1 and n > blen:
+                    best, blen = s, n
+            if best:
+                for cand in (f"headicon_monster_{best}.png", f"headicon_monster_{best}_1.png"):
+                    if self._exists(cand):
+                        return cand
         return None
 
     def _exists(self, name: str) -> bool:

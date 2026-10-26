@@ -10,9 +10,9 @@ needed_icons() which merges DB data with emulator config sources.
 """
 import json
 import os
+import re
 import struct
 import sys
-
 import UnityPy
 
 CLIENT = r"C:\Users\Carlos\Downloads\RO3Emu-win-x64"
@@ -37,6 +37,7 @@ ATLAS_BUNDLES = {
     "3e2da8948df5f6c9.bundle": "CommonHeadBoss_Icon",
     "fabbb33eb51c68f5.bundle": "CommonHeadNpc_Icon",
     "ebda4b47a834ddb3.bundle": "CommonHeadExplicit_Icon",
+    "MVP_Icon.spriteatlasv2": "MVP_Icon",
     "Skill_Icon.spriteatlasv2": "Skill_Icon",
     "Buff_Icon2.spriteatlasv2": "Buff_Icon2",
     "Job.spriteatlasv2": "Job",
@@ -212,6 +213,22 @@ def needed_icons():
         add("map", r.get("_kWorldMapIcon"))
     for r in cfg("NPCConfig.json"):
         add("monster", r.get("_kHeadIcon"))
+    # MVPConfig/HeroicSpirit use headicon_monster_<stem>_1 variants; include them
+    for r in cfg("MVPConfig.json"):
+        add("monster", r.get("_iHeadIcon"))
+    for r in cfg("HeroicSpiritLayerConfig.json"):
+        add("monster", r.get("_kHeadIcon"))
+    # model-derived headicons (ETL resolution): probe both bare and _1 forms
+    for r in cfg("UnitConfig.json"):
+        m = (r.get("_kModelPath_Default") or "")
+        if not m.startswith("model_"):
+            continue
+        b = re.sub(r"^model_(monsterjunior|boss|npc|pet|monstersenior|monster)_", "", m.replace(".prefab", ""))
+        b = re.sub(r"(low|middle|high|fine)\d*$", "", b)
+        b = re.sub(r"\d+$", "", b)
+        if len(b) >= 4:
+            add("monster", f"headicon_monster_{b}.png")
+            add("monster", f"headicon_monster_{b}_1.png")
 
     return {c: sorted(v) for c, v in sorted(cats.items())}
 
