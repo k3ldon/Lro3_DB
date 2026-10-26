@@ -11,7 +11,7 @@ const assetsDir = join(root, "public", "assets", "ro3");
 // Resolve an icon filename to a verified /assets/ro3/{category}/{stem}.webp path.
 const stemExists = (category, filename) => {
   if (!filename) return "";
-  const stem = filename.replace(/\.png$/i, "");
+  const stem = filename.replace(/\.(png|webp)$/i, "");
   const p = join(assetsDir, category, `${stem}.webp`);
   if (existsSync(p)) return `/assets/ro3/${category}/${stem}.webp`;
   // MVP head icons carry a "_1" suffix variant; fall back to the base icon.
