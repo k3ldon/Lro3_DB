@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -136,9 +137,82 @@ def drop_refs(npc: dict) -> dict:
     }
 
 
+def model_stem(units, npc) -> str:
+    u = units.get(npc.get("_iUnitID"), {})
+    return (u.get("_kModelPath_Default") or "").replace(".prefab", "")
+
+
+class MonsterIcons:
+    """Resolve monster icons by priority: derived-from-model headicon, then
+    NPCConfig._kHeadIcon (family-shared UI art), else ''."""
+
+    def __init__(self, units):
+        import sys as _sys
+        scripts = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "scripts"))
+        if scripts not in _sys.path:
+            _sys.path.insert(0, scripts)
+        from extract_icons import Vfs
+        vfs_dir = os.environ.get(
+            "RO3_VFS_DIR",
+            r"C:\Users\Carlos\Downloads\RO3Emu-win-x64\ro3_Data\StreamingAssets\VFS",
+        )
+        self.units = units
+        try:
+            self.vfs = Vfs(vfs_dir)
+        except Exception as e:
+            print(f"  warn: VFS unavailable ({e}), falling back to _kHeadIcon")
+            self.vfs = None
+        self._cache: dict[int, str] = {}
+
+    def resolve(self, npc) -> str:
+        uid = npc.get("_iUnitID")
+        if uid in self._cache:
+            return self._cache[uid]
+        icon = ""
+        if self.vfs is not None:
+            model = model_stem(self.units, npc)
+            if model.startswith("model_pet_"):
+                cand = f"pet_icon_head_{model.rsplit('_', 1)[-1]}.png"
+            else:
+                cand = self._from_model(model)
+            if cand and self._exists(cand):
+                icon = cand
+        if not icon:
+            icon = (npc.get("_kHeadIcon") or "").split("/")[-1]
+        self._cache[uid] = icon
+        return icon
+
+    def _from_model(self, model: str) -> str | None:
+        if not model.startswith("model_"):
+            return None
+        base = re.sub(r"^model_(monsterjunior|boss|npc|pet)_", "", model)
+        for cand in (
+            f"headicon_monster_{base}.png",
+            f"headicon_monster_{base}_1.png",
+        ):
+            if self._exists(cand):
+                return cand
+        stripped = re.sub(r"(low|middle|high|fine)$", "", base)
+        if stripped != base:
+            for cand in (
+                f"headicon_monster_{stripped}.png",
+                f"headicon_monster_{stripped}_1.png",
+            ):
+                if self._exists(cand):
+                    return cand
+        return None
+
+    def _exists(self, name: str) -> bool:
+        if not name:
+            return False
+        return self.vfs.raw(name) is not None
+
+
 def extract_monsters(npcs, mvps, npcdrop, ndrop, pools, groups, table) -> tuple[list[dict], list[dict]]:
     monsters, mvp_rows = [], []
     mvp_by_npc = {m["_iNPCID"]: m for m in mvps.values()}
+    units = load_config("UnitConfig")
+    icons = MonsterIcons(units)
     for nid, n in npcs.items():
         if not n.get("_iAttributeVariated"):
             continue  # non-combat NPC
@@ -157,7 +231,8 @@ def extract_monsters(npcs, mvps, npcdrop, ndrop, pools, groups, table) -> tuple[
             "element": n.get("_iElement", 1),
             "attributeKey": n.get("_iAttributeVariated"),
             "isMvp": mvp is not None,
-            "icon": (n.get("_kHeadIcon") or "").split("/")[-1],
+            "icon": icons.resolve(n),
+            "model": model_stem(units, n),
             "exp": n.get("_iFixedExp", 0),
             "drops": drop_refs(n),
             "hp": 0,  # filled by stats join below
